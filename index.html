@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>职场嘴替 AI 🧠</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background-color: #f0f4ff;
+      background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .vibe-btn { background: white; color: #374151; border-color: #e5e7eb; }
+    .vibe-btn-active {
+      background-color: #4f46e5 !important; color: white !important;
+      border-color: #4f46e5 !important; transform: scale(1.05);
+      box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+    }
+    .result-enter { animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .typing-cursor::after { content: "▍"; animation: blink 0.8s infinite; color: #6366f1; }
+    ::selection { background: #c7d2fe; color: #3730a3; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start pt-8 pb-20 px-4">
+
+  <div class="w-full max-w-md flex flex-col items-center mb-8">
+    <h1 class="text-3xl font-black text-gray-900 tracking-tight mb-1">职场嘴替 AI 🧠</h1>
+    <p class="text-gray-400 text-xs font-medium">DeepSeek V3 驱动 · 实时生成 · 流式输出</p>
+  </div>
+
+  <div class="w-full max-w-md mb-6">
+    <div class="flex flex-wrap justify-center gap-2" id="style-container">
+      <button type="button" data-style="formal" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">👔 互联网黑话</button>
+      <button type="button" data-style="government" class="vibe-btn vibe-btn-active px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🏛️ 官方通报</button>
+      <button type="button" data-style="tactful" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🍵 高情商委婉</button>
+      <button type="button" data-style="humorous" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🤪 发疯阴阳</button>
+      <button type="button" data-style="english" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🇺🇸 外企装X</button>
+    </div>
+  </div>
+
+  <div class="w-full max-w-md">
+    <textarea id="input-text"
+      class="w-full h-40 p-4 bg-white border-2 border-gray-200 rounded-3xl outline-none text-lg placeholder-gray-300 focus:border-indigo-500 transition-all resize-none font-bold text-gray-700 shadow-sm"
+      placeholder="输入大实话...&#10;例如：这代码写得像屎 / 需求太离谱 / 工资太低 / 天天加班"></textarea>
+  </div>
+
+  <div class="w-full max-w-md mt-6">
+    <button type="button" id="translate-btn"
+      class="w-full py-4 bg-black hover:bg-gray-800 text-white text-lg font-black rounded-full shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+      一键语义重构 ✨
+    </button>
+  </div>
+
+  <div id="result-container" class="hidden w-full max-w-md mt-8">
+    <div id="result-card" class="bg-white rounded-3xl shadow-xl p-6 border border-gray-100 relative overflow-hidden result-enter">
+      <div class="absolute -top-4 -right-4 w-16 h-16 bg-indigo-100 rounded-full opacity-50"></div>
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">转换结果</span>
+        <button type="button" id="again-btn"
+          class="text-xs text-gray-400 hover:text-indigo-600 transition font-bold flex items-center gap-1 disabled:opacity-30">
+          <span>换种说法</span><span>🎲</span>
+        </button>
+      </div>
+      <div class="bg-gradient-to-br from-gray-50 to-indigo-50 p-5 rounded-2xl border border-gray-100 mb-4 min-h-[96px] flex items-center">
+        <p class="text-md font-bold text-gray-800 leading-relaxed" id="result-text">...</p>
+      </div>
+      <button type="button" id="copy-btn"
+        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition active:scale-95">
+        复制到剪贴板 📋
+      </button>
+    </div>
+  </div>
+
+<script>
+"use strict";
+
+const API_KEY = "sk-9d40425491d342dc984e1a232e8ae34f";
+const API_URL = "https://api.deepseek.com/chat/completions";
+const MODEL = "deepseek-chat";
+
+let currentStyle = "government";
+let isLoading = false;
+let abortController = null;
+
+const styleButtons = document.querySelectorAll(".vibe-btn");
+const inputEl = document.getElementById("input-text");
+const translateBtn = document.getElementById("translate-btn");
+const againBtn = document.getElementById("again-btn");
+const copyBtn = document.getElementById("copy-btn");
+const resultContainer = document.getElementById("result-container");
+const resultCard = document.getElementById("result-card");
+const resultText = document.getElementById("result-text");
+
+const stylePrompts = {
+  formal: `你在帮我把一句大实话翻译成互联网大厂黑话。像一个在大厂卷了八年的人在周会上发言那样说话。
+
+风格参考——
+原话"这项目没人用"→"当前产品的用户心智渗透率存在较大提升空间，建议下个Q重点攻坚PMF验证闭环"
+原话"他啥也不干"→"该同学目前的bandwidth主要focus在战略思考层面，hands-on的部分还需要进一步拉通"
+
+注意：
+- 像真人说话，有语感，不要像在背课文
+- 术语要用得溜而不是硬塞，读起来要顺口
+- 别加引号，别解释，别说"翻译如下"，直接输出就行
+- 一两句话搞定`,
+
+  government: `你在帮我把一句大实话翻译成官方通报/新闻联播体。就是那种明明是小事但你要用处理国家大事的口吻来说的感觉。
+
+风格参考——
+原话"食堂太难吃了"→"经查，该单位后勤保障部门在膳食服务供给侧存在突出短板，群众满意度长期处于低位运行。目前已责令相关责任人深刻检视、立行立改。"
+原话"他上班摸鱼"→"该同志在岗期间纪律意识淡薄，存在'人在心不在'的躺平现象，造成了不良影响。"
+
+注意：
+- 笑点在于反差——越小的事越要用大词
+- 要有通报的节奏感，但别写太长，两三句就够
+- 像真的通报那样自然，别刻意堆砌
+- 直接输出，别加任何解释和引号`,
+
+  tactful: `你在帮我把一句大实话用高情商的方式重新说。不是那种虚伪的客套，而是真正聪明人说话的方式——表面滴水不漏，内行人一听就懂你在说啥。
+
+风格参考——
+原话"你的方案是垃圾"→"这个方向挺大胆的，不过如果是我的话可能会换个切入点，要不咱们再碰一下？"
+原话"这人是废物"→"他可能还需要一些时间找到最适合自己的赛道吧"
+原话"工资太低了"→"以目前的工作强度来看，我觉得薪资结构可能还有一些优化的空间"
+
+注意：
+- 要像一个真实的、情商高的朋友在教你怎么说话
+- 绵里藏针但不刻薄，让人品出味道
+- 口语化，别用书面语
+- 直接输出，一两句话`,
+
+  humorous: `你在帮我把一句大实话用发疯/阴阳怪气的方式重新说。像一个被逼到极限的打工人在深夜发的朋友圈，又好笑又真实。
+
+风格参考——
+原话"天天加班"→"我的工位已经产生了记忆海绵效应，上面有我屁股的形状"
+原话"领导画饼"→"我们领导应该去开个烘焙店，每天产出的饼够养活一个中型面包厂"
+原话"需求又改了"→"需求改了四版之后我悟了，原来这不是在做产品，这是在玩大家来找茬"
+
+注意：
+- 要好笑！要有画面感！要让人想截图转发！
+- 像真人在吐槽，不是AI在造句
+- 比喻要具体、生动、出人意料
+- 别用"仿佛""宛如"这种文绉绉的词，口语化
+- 直接输出，别解释`,
+
+  english: `你在帮我把一句大实话翻译成外企人说话的方式——就是那种中英夹杂、明明能说中文但偏要夹英文的风格。像在Teams群里跟同事吐槽。
+
+风格参考——
+原话"这会毫无意义"→"这个meeting完全是waste of bandwidth，一个action item都没有，纯粹burn我一小时"
+原话"他啥也不干"→"他的calendar永远block得满满的但output约等于零，很好奇他在deliver什么"
+原话"工资太低"→"说实话comp这块确实有点below market了，再不adjust我真的要start looking了"
+
+注意：
+- 英文部分要用得自然，像真的外企人说话习惯，不是硬翻译
+- 吐槽的关键词用中文落地，这样更有笑点
+- 像在跟同事私聊，不是在写邮件
+- 直接输出，一两句话`
+};
+
+function getSystemPrompt() {
+  return stylePrompts[currentStyle] || stylePrompts.government;
+}
+
+async function callDeepSeek(userInput) {
+  if (abortController) {
+    abortController.abort();
+  }
+  abortController = new AbortController();
+
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + API_KEY
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [
+        { role: "system", content: getSystemPrompt() },
+        { role: "user", content: userInput }
+      ],
+      stream: true,
+      temperature: 1.05,
+      max_tokens: 200
+    }),
+    signal: abortController.signal
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error("API 请求失败: " + response.status + " " + err);
+  }
+
+  return response;
+}
+
+async function streamResult(response) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let buffer = "";
+  let fullText = "";
+
+  resultText.textContent = "";
+  resultText.classList.add("typing-cursor");
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith("data:")) continue;
+
+      const data = trimmed.slice(5).trim();
+      if (data === "[DONE]") break;
+
+      try {
+        const json = JSON.parse(data);
+        const delta = json.choices && json.choices[0] && json.choices[0].delta;
+        if (delta && delta.content) {
+          fullText += delta.content;
+          resultText.textContent = fullText;
+        }
+      } catch (e) {}
+    }
+  }
+
+  resultText.classList.remove("typing-cursor");
+  return fullText;
+}
+
+async function handleTranslate() {
+  const raw = inputEl.value.trim();
+
+  if (!raw) {
+    inputEl.classList.add("border-red-500");
+    inputEl.placeholder = "先输入一句大实话再点转换～";
+    setTimeout(function() { inputEl.classList.remove("border-red-500"); }, 700);
+    return;
+  }
+
+  if (isLoading) return;
+  setLoading(true);
+
+  resultContainer.classList.remove("hidden");
+  resultCard.classList.remove("result-enter");
+  void resultCard.offsetWidth;
+  resultCard.classList.add("result-enter");
+  resultText.textContent = "";
+  resultText.classList.add("typing-cursor");
+
+  setTimeout(function() {
+    resultContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 60);
+
+  try {
+    const response = await callDeepSeek(raw);
+    await streamResult(response);
+  } catch (err) {
+    if (err.name === "AbortError") return;
+    resultText.classList.remove("typing-cursor");
+    resultText.textContent = "⚠️ 生成失败：" + err.message;
+  } finally {
+    setLoading(false);
+  }
+}
+
+function setLoading(loading) {
+  isLoading = loading;
+  translateBtn.disabled = loading;
+  againBtn.disabled = loading;
+  translateBtn.textContent = loading ? "生成中..." : "一键语义重构 ✨";
+}
+
+function setActiveStyle(style, btn) {
+  currentStyle = style;
+  styleButtons.forEach(function(b) { b.classList.remove("vibe-btn-active"); });
+  btn.classList.add("vibe-btn-active");
+  if (inputEl.value.trim() && !isLoading) {
+    handleTranslate();
+  }
+}
+
+function copyResult() {
+  const text = resultText.textContent.trim();
+  if (!text || text === "..." || text.startsWith("⚠️")) return;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(showCopied);
+  } else {
+    const temp = document.createElement("textarea");
+    temp.value = text;
+    temp.style.position = "fixed";
+    temp.style.left = "-9999px";
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand("copy");
+    document.body.removeChild(temp);
+    showCopied();
+  }
+}
+
+function showCopied() {
+  const old = copyBtn.textContent;
+  copyBtn.textContent = "已复制 ✅";
+  copyBtn.classList.replace("bg-indigo-600", "bg-green-500");
+  copyBtn.classList.replace("hover:bg-indigo-700", "hover:bg-green-600");
+  setTimeout(function() {
+    copyBtn.textContent = old;
+    copyBtn.classList.replace("bg-green-500", "bg-indigo-600");
+    copyBtn.classList.replace("hover:bg-green-600", "hover:bg-indigo-700");
+  }, 1200);
+}
+
+styleButtons.forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    setActiveStyle(btn.getAttribute("data-style"), btn);
+  });
+});
+
+translateBtn.addEventListener("click", handleTranslate);
+againBtn.addEventListener("click", handleTranslate);
+copyBtn.addEventListener("click", copyResult);
+
+inputEl.addEventListener("keydown", function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    handleTranslate();
+  }
+});
+</script>
+</body>
+</html>
