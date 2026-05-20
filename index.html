@@ -6,76 +6,317 @@
   <title>职场嘴替 AI 🧠</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
-      background-color: #f0f4ff;
-      background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-      background-size: 20px 20px;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(99, 102, 241, .18), transparent 28%),
+        radial-gradient(circle at 82% 18%, rgba(236, 72, 153, .14), transparent 26%),
+        radial-gradient(circle at 50% 90%, rgba(14, 165, 233, .13), transparent 30%),
+        #f5f7ff;
+      min-height: 100vh;
     }
-    .vibe-btn { background: white; color: #374151; border-color: #e5e7eb; }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(100,116,139,.22) 1px, transparent 1px);
+      background-size: 22px 22px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.7), rgba(0,0,0,.2));
+      z-index: -1;
+    }
+
+    .glass {
+      background: rgba(255,255,255,.76);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,.78);
+      box-shadow: 0 22px 70px rgba(15, 23, 42, .10);
+    }
+
+    .vibe-btn {
+      background: white;
+      color: #374151;
+      border-color: #e5e7eb;
+      white-space: nowrap;
+    }
+
     .vibe-btn-active {
-      background-color: #4f46e5 !important; color: white !important;
-      border-color: #4f46e5 !important; transform: scale(1.05);
-      box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+      background-color: #4f46e5 !important;
+      color: white !important;
+      border-color: #4f46e5 !important;
+      transform: translateY(-1px) scale(1.04);
+      box-shadow: 0 14px 24px -10px rgba(79, 70, 229, .75);
     }
-    .result-enter { animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    .result-enter {
+      animation: slideUp .35s cubic-bezier(.16, 1, .3, 1);
+    }
+
     @keyframes slideUp {
       from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    .typing-cursor::after { content: "▍"; animation: blink 0.8s infinite; color: #6366f1; }
-    ::selection { background: #c7d2fe; color: #3730a3; }
+
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50% { opacity: .3; }
+    }
+
+    .typing-cursor::after {
+      content: "▍";
+      animation: blink .8s infinite;
+      color: #6366f1;
+    }
+
+    .side-card {
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+
+    .side-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 45px rgba(15, 23, 42, .10);
+      border-color: rgba(99, 102, 241, .28);
+    }
+
+    .example-chip {
+      transition: all .18s ease;
+    }
+
+    .example-chip:hover {
+      transform: translateX(2px);
+      background: #eef2ff;
+      color: #4338ca;
+    }
+
+    .grain {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .23;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.35'/%3E%3C/svg%3E");
+    }
+
+    .style-sticky-bar {
+      position: sticky;
+      top: 12px;
+      z-index: 30;
+      margin: -6px -6px 18px;
+      padding: 10px 8px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, .72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,.76);
+      box-shadow: 0 14px 35px rgba(15, 23, 42, .08);
+    }
+
+    @media (max-width: 640px) {
+      .style-scroll {
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+      }
+
+      .style-scroll::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    ::selection {
+      background: #c7d2fe;
+      color: #3730a3;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-start pt-8 pb-20 px-4">
 
-  <div class="w-full max-w-md flex flex-col items-center mb-8">
-    <h1 class="text-3xl font-black text-gray-900 tracking-tight mb-1">职场嘴替 AI 🧠</h1>
-    <p class="text-gray-400 text-xs font-medium">DeepSeek V3 驱动 · 实时生成 · 流式输出</p>
-  </div>
+<body class="min-h-screen px-4 py-6 md:py-10">
+  <div class="mx-auto w-full max-w-7xl">
 
-  <div class="w-full max-w-md mb-6">
-    <div class="flex flex-wrap justify-center gap-2" id="style-container">
-      <button type="button" data-style="formal" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">👔 互联网黑话</button>
-      <button type="button" data-style="government" class="vibe-btn vibe-btn-active px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🏛️ 官方通报</button>
-      <button type="button" data-style="tactful" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🍵 高情商委婉</button>
-      <button type="button" data-style="humorous" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🤪 发疯阴阳</button>
-      <button type="button" data-style="english" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🇺🇸 外企装X</button>
-    </div>
-  </div>
-
-  <div class="w-full max-w-md">
-    <textarea id="input-text"
-      class="w-full h-40 p-4 bg-white border-2 border-gray-200 rounded-3xl outline-none text-lg placeholder-gray-300 focus:border-indigo-500 transition-all resize-none font-bold text-gray-700 shadow-sm"
-      placeholder="输入大实话...&#10;例如：这代码写得像屎 / 需求太离谱 / 工资太低 / 天天加班"></textarea>
-  </div>
-
-  <div class="w-full max-w-md mt-6">
-    <button type="button" id="translate-btn"
-      class="w-full py-4 bg-black hover:bg-gray-800 text-white text-lg font-black rounded-full shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-      一键语义重构 ✨
-    </button>
-  </div>
-
-  <div id="result-container" class="hidden w-full max-w-md mt-8">
-    <div id="result-card" class="bg-white rounded-3xl shadow-xl p-6 border border-gray-100 relative overflow-hidden result-enter">
-      <div class="absolute -top-4 -right-4 w-16 h-16 bg-indigo-100 rounded-full opacity-50"></div>
-      <div class="flex justify-between items-center mb-3">
-        <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">转换结果</span>
-        <button type="button" id="again-btn"
-          class="text-xs text-gray-400 hover:text-indigo-600 transition font-bold flex items-center gap-1 disabled:opacity-30">
-          <span>换种说法</span><span>🎲</span>
-        </button>
+    <header class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      <div>
+        <div class="inline-flex items-center gap-2 rounded-full bg-white/70 border border-white px-3 py-1 text-xs font-black text-indigo-600 shadow-sm mb-3">
+          <span class="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+          DeepSeek V3 · 实时生成 · 流式输出
+        </div>
+        <h1 class="text-4xl md:text-5xl font-black text-gray-950 tracking-tight">
+          职场嘴替 AI <span class="inline-block rotate-6">🧠</span>
+        </h1>
+        <p class="mt-2 text-sm md:text-base text-slate-500 font-medium">
+          把不好直接说的话，翻译成另一种更有节目效果的说法。
+        </p>
       </div>
-      <div class="bg-gradient-to-br from-gray-50 to-indigo-50 p-5 rounded-2xl border border-gray-100 mb-4 min-h-[96px] flex items-center">
-        <p class="text-md font-bold text-gray-800 leading-relaxed" id="result-text">...</p>
+
+      <div class="hidden md:flex items-center gap-3">
+        <div class="glass rounded-2xl px-4 py-3">
+          <p class="text-[11px] text-slate-400 font-bold uppercase">Modes</p>
+          <p class="text-xl font-black text-slate-900">6</p>
+        </div>
+        <div class="glass rounded-2xl px-4 py-3">
+          <p class="text-[11px] text-slate-400 font-bold uppercase">Shortcut</p>
+          <p class="text-xl font-black text-slate-900">⌘/Ctrl + Enter</p>
+        </div>
       </div>
-      <button type="button" id="copy-btn"
-        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition active:scale-95">
-        复制到剪贴板 📋
-      </button>
-    </div>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-[280px_minmax(420px,560px)_280px] xl:grid-cols-[320px_minmax(460px,600px)_320px] gap-5 lg:gap-6 items-start">
+
+      <aside class="hidden lg:block space-y-4 sticky top-8">
+        <section class="glass rounded-3xl p-5 side-card">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-black text-slate-900">风格雷达</h2>
+            <span class="text-lg">📡</span>
+          </div>
+
+          <div id="style-info-list" class="space-y-3">
+            <div data-info="government" class="style-info rounded-2xl bg-indigo-50 border border-indigo-100 p-3">
+              <p class="text-sm font-black text-indigo-700">🏛️ 官方通报</p>
+              <p class="text-xs text-slate-500 mt-1 leading-relaxed">把小事写成通报，严肃、庄重、略带自然官腔。</p>
+            </div>
+            <div data-info="formal" class="style-info rounded-2xl bg-white/70 border border-slate-100 p-3">
+              <p class="text-sm font-black text-slate-800">👔 互联网黑话</p>
+              <p class="text-xs text-slate-500 mt-1 leading-relaxed">大厂会议室味，拉通、闭环、颗粒度齐飞。</p>
+            </div>
+            <div data-info="tactful" class="style-info rounded-2xl bg-white/70 border border-slate-100 p-3">
+              <p class="text-sm font-black text-slate-800">🍵 高情商委婉</p>
+              <p class="text-xs text-slate-500 mt-1 leading-relaxed">表面夸奖，实际暴击，适合优雅阴阳。</p>
+            </div>
+            <div data-info="humorous" class="style-info rounded-2xl bg-white/70 border border-slate-100 p-3">
+              <p class="text-sm font-black text-slate-800">🤪 发疯阴阳</p>
+              <p class="text-xs text-slate-500 mt-1 leading-relaxed">适合精神状态不太稳定但很有梗的时候。</p>
+            </div>
+            <div data-info="academic" class="style-info rounded-2xl bg-white/70 border border-slate-100 p-3">
+              <p class="text-sm font-black text-slate-800">🎓 学院派</p>
+              <p class="text-xs text-slate-500 mt-1 leading-relaxed">导师办公室训话感，主打一个血压升高。</p>
+            </div>
+            <div data-info="english" class="style-info rounded-2xl bg-white/70 border border-slate-100 p-3">
+              <p class="text-sm font-black text-slate-800">🇺🇸 外企装X</p>
+              <p class="text-xs text-slate-500 mt-1 leading-relaxed">LinkedIn正能量包装，中文负责戳破泡泡。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="glass rounded-3xl p-5 side-card overflow-hidden relative">
+          <div class="grain"></div>
+          <div class="relative">
+            <h2 class="font-black text-slate-900 mb-2">小提示</h2>
+            <p class="text-sm text-slate-500 leading-relaxed">
+              输入越具体，生成越有梗。比如不要只写"烦"，可以写"需求改了八版还说是微调"。
+            </p>
+          </div>
+        </section>
+      </aside>
+
+      <section id="main-panel" class="glass rounded-[2rem] p-4 md:p-6 relative overflow-visible">
+        <div class="absolute -top-24 -right-24 w-56 h-56 rounded-full bg-indigo-200/45 blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-28 -left-24 w-60 h-60 rounded-full bg-sky-200/35 blur-3xl pointer-events-none"></div>
+
+        <div class="relative">
+          <div id="style-bar" class="style-sticky-bar">
+            <div class="flex flex-wrap justify-center gap-2 style-scroll" id="style-container">
+              <button type="button" data-style="formal" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">👔 互联网黑话</button>
+              <button type="button" data-style="government" class="vibe-btn vibe-btn-active px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🏛️ 官方通报</button>
+              <button type="button" data-style="tactful" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🍵 高情商委婉</button>
+              <button type="button" data-style="humorous" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🤪 发疯阴阳</button>
+              <button type="button" data-style="academic" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🎓 学院派</button>
+              <button type="button" data-style="english" class="vibe-btn px-3 py-1.5 rounded-full border-2 font-bold transition-all text-xs cursor-pointer">🇺🇸 外企装X</button>
+            </div>
+          </div>
+
+          <div id="input-area">
+            <label class="flex items-center justify-between mb-2 px-1">
+              <span class="text-sm font-black text-slate-700">输入大实话</span>
+              <span id="char-count" class="text-xs font-bold text-slate-400">0 字</span>
+            </label>
+            <textarea id="input-text"
+              class="w-full h-44 md:h-48 p-4 bg-white/90 border-2 border-white rounded-3xl outline-none text-lg placeholder-gray-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all resize-none font-bold text-gray-700 shadow-sm"
+              placeholder="例如：这代码写得像屎 / 需求太离谱 / 工资太低 / 天天加班"></textarea>
+          </div>
+
+          <div class="mt-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
+            <button type="button" id="translate-btn"
+              class="w-full py-4 bg-slate-950 hover:bg-slate-800 text-white text-lg font-black rounded-full shadow-lg shadow-slate-900/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+              一键语义重构 ✨
+            </button>
+            <button type="button" id="clear-btn"
+              class="px-5 py-4 bg-white hover:bg-slate-50 text-slate-600 text-sm font-black rounded-full border border-slate-100 transition-all active:scale-95">
+              清空
+            </button>
+          </div>
+
+          <div id="result-container" class="hidden mt-7">
+            <div id="result-card" class="bg-white rounded-3xl shadow-xl p-5 md:p-6 border border-gray-100 relative overflow-hidden result-enter">
+              <div class="absolute -top-4 -right-4 w-16 h-16 bg-indigo-100 rounded-full opacity-60"></div>
+              <div class="flex justify-between items-center mb-3 relative">
+                <span class="text-xs font-black text-indigo-600 uppercase tracking-wider">转换结果</span>
+                <button type="button" id="again-btn"
+                  class="text-xs text-gray-400 hover:text-indigo-600 transition font-black flex items-center gap-1 disabled:opacity-30">
+                  <span>换种说法</span><span>🎲</span>
+                </button>
+              </div>
+              <div class="bg-gradient-to-br from-gray-50 to-indigo-50 p-5 rounded-2xl border border-gray-100 mb-4 min-h-[112px] flex items-center">
+                <p class="text-md md:text-lg font-bold text-gray-800 leading-relaxed whitespace-pre-wrap" id="result-text">...</p>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button type="button" id="copy-btn"
+                  class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl transition active:scale-95">
+                  复制到剪贴板 📋
+                </button>
+                <button type="button" id="save-btn"
+                  class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-3 rounded-xl transition active:scale-95">
+                  收进右侧记录 ⭐
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="hidden lg:block space-y-4 sticky top-8">
+        <section class="glass rounded-3xl p-5 side-card">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-black text-slate-900">随手试试</h2>
+            <span class="text-lg">🎲</span>
+          </div>
+          <div class="space-y-2" id="examples-list">
+            <button class="example-chip w-full text-left rounded-2xl bg-white/70 border border-slate-100 px-3 py-3 text-sm font-bold text-slate-600">需求改了八版还说只是小调整</button>
+            <button class="example-chip w-full text-left rounded-2xl bg-white/70 border border-slate-100 px-3 py-3 text-sm font-bold text-slate-600">这会开了两个小时但什么都没定</button>
+            <button class="example-chip w-full text-left rounded-2xl bg-white/70 border border-slate-100 px-3 py-3 text-sm font-bold text-slate-600">工资太低了，干不动了</button>
+            <button class="example-chip w-full text-left rounded-2xl bg-white/70 border border-slate-100 px-3 py-3 text-sm font-bold text-slate-600">这个代码谁写的，真的看不懂</button>
+            <button class="example-chip w-full text-left rounded-2xl bg-white/70 border border-slate-100 px-3 py-3 text-sm font-bold text-slate-600">你们这个流程是不是太离谱了</button>
+          </div>
+        </section>
+
+        <section class="glass rounded-3xl p-5 side-card">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-black text-slate-900">本次记录</h2>
+            <button id="clear-history-btn" class="text-xs font-black text-slate-400 hover:text-rose-500">清空</button>
+          </div>
+          <div id="history-list" class="space-y-2">
+            <div class="rounded-2xl bg-white/60 border border-dashed border-slate-200 p-4 text-sm text-slate-400 leading-relaxed">
+              生成后点"收进右侧记录"，好用的句子会出现在这里。
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="lg:hidden glass rounded-3xl p-4">
+        <h2 class="font-black text-slate-900 mb-3">随手试试 🎲</h2>
+        <div class="flex gap-2 overflow-x-auto pb-1" id="mobile-examples-list">
+          <button class="example-chip shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-600">需求改了八版还说只是小调整</button>
+          <button class="example-chip shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-600">这会开了两个小时但什么都没定</button>
+          <button class="example-chip shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-600">工资太低了，干不动了</button>
+          <button class="example-chip shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-600">这个代码谁写的，真的看不懂</button>
+        </div>
+      </section>
+    </main>
   </div>
 
 <script>
@@ -88,15 +329,25 @@ const MODEL = "deepseek-chat";
 let currentStyle = "government";
 let isLoading = false;
 let abortController = null;
+let requestSeq = 0;
+let lastGeneratedText = "";
 
 const styleButtons = document.querySelectorAll(".vibe-btn");
+const styleInfoItems = document.querySelectorAll(".style-info");
 const inputEl = document.getElementById("input-text");
 const translateBtn = document.getElementById("translate-btn");
 const againBtn = document.getElementById("again-btn");
 const copyBtn = document.getElementById("copy-btn");
+const saveBtn = document.getElementById("save-btn");
+const clearBtn = document.getElementById("clear-btn");
+const clearHistoryBtn = document.getElementById("clear-history-btn");
 const resultContainer = document.getElementById("result-container");
 const resultCard = document.getElementById("result-card");
 const resultText = document.getElementById("result-text");
+const charCount = document.getElementById("char-count");
+const historyList = document.getElementById("history-list");
+const inputArea = document.getElementById("input-area");
+const styleBar = document.getElementById("style-bar");
 
 const stylePrompts = {
   formal: `你在帮我把一句大实话翻译成互联网大厂黑话。像一个在大厂卷了八年的人在周会上发言那样说话。
@@ -111,30 +362,49 @@ const stylePrompts = {
 - 别加引号，别解释，别说"翻译如下"，直接输出就行
 - 一两句话搞定`,
 
-  government: `你在帮我把一句大实话翻译成官方通报/新闻联播体。就是那种明明是小事但你要用处理国家大事的口吻来说的感觉。
+  government: `你的任务是把一句话改写成中国政府机关公文/官方通报的语体。写出来要像政府网站、纪委通报、街道办情况说明里的真实段落，但不要僵硬堆词，要有一点自然人写材料的流畅感。
+
+重要规则：
+- 无论用户输入是"你""他""我""我们"还是什么人称，都要自动转化为第三人称通报体
+- 如果原话是对某个人说的，比如"你怎么这么蠢"，转写为"该同志/相关人员/当事人"的问题
+- 如果原话是在吐槽一件事，比如"这个流程太离谱"，转写为"有关流程/相关工作机制"存在的问题
+- 不要照搬原话里的"你"，不要写成对话，也不要像训话
+
+公文语感：
+- 常用表达：经查、经核实、有关情况反映出、暴露出、已责令、将持续跟进、切实维护、举一反三
+- 行文节奏：先交代情况，再定性问题，最后给出处理或整改方向
+- 语气要庄重但顺，不要每句话都塞四字格，不然会假
 
 风格参考——
-原话"食堂太难吃了"→"经查，该单位后勤保障部门在膳食服务供给侧存在突出短板，群众满意度长期处于低位运行。目前已责令相关责任人深刻检视、立行立改。"
-原话"他上班摸鱼"→"该同志在岗期间纪律意识淡薄，存在'人在心不在'的躺平现象，造成了不良影响。"
+原话"你是不是脑子有病"→"经核实，该同志近期在相关工作中多次出现判断失准、处置失当等情况，反映出其岗位胜任能力与实际工作要求仍有差距。有关方面已提醒其认真复盘，切实提高履职水平。"
+原话"你们这个流程是不是太离谱了"→"群众反映的有关流程设置问题基本属实，相关环节存在链条过长、口径不一、效率偏低等情况，给正常工作推进造成不必要影响。下一步将对现有流程进行梳理优化，避免类似问题反复发生。"
+原话"食堂太难吃"→"经查，该单位食堂膳食质量长期偏低，就餐满意度持续处于低位运行，暴露出后勤保障工作中精细化管理不足的问题。已约谈相关负责人并责令限期整改。"
+原话"我不想上班"→"近期，该同志工作积极性有所波动，主动担当意识出现一定程度弱化。所在单位应及时开展谈心谈话，帮助其调整状态、回归岗位职责。"
 
 注意：
-- 笑点在于反差——越小的事越要用大词
-- 要有通报的节奏感，但别写太长，两三句就够
-- 像真的通报那样自然，别刻意堆砌
-- 直接输出，别加任何解释和引号`,
+- 直接输出通报体，2-4句话
+- 不要加引号，不要解释，不要出现"改写如下"
+- 笑点在于一本正经地处理小事，但文本本身要像真的材料`,
 
-  tactful: `你在帮我把一句大实话用高情商的方式重新说。不是那种虚伪的客套，而是真正聪明人说话的方式——表面滴水不漏，内行人一听就懂你在说啥。
+  tactful: `你的任务是把一句大实话转写成互联网高情商表达。注意：这不是对话，不是在跟谁说话，而是一种"陈述式转写"——像发朋友圈、写工作总结、或者在群里优雅吐槽时的措辞方式。
+
+核心要求：
+- 输出是一段陈述/感慨/点评，不是对话，不能出现"你""您""咱们聊聊"等对话词
+- 表面温和得体，细品有锋芒，属于"夸着夸着就把人骂了"的类型
+- 要有网感和幽默感，不是干巴巴的客套话
 
 风格参考——
-原话"你的方案是垃圾"→"这个方向挺大胆的，不过如果是我的话可能会换个切入点，要不咱们再碰一下？"
-原话"这人是废物"→"他可能还需要一些时间找到最适合自己的赛道吧"
-原话"工资太低了"→"以目前的工作强度来看，我觉得薪资结构可能还有一些优化的空间"
+原话"这代码写得像屎"→"这段代码的风格非常大胆前卫，充分体现了作者不走寻常路的创作理念，建议申请非物质文化遗产保护"
+原话"领导是傻逼"→"领导的决策思路经常超越常规认知框架，每次开会都能带来意想不到的智力挑战"
+原话"工资太低了"→"目前的薪资水平完美适配了一种低物欲的禅修生活方式，非常有助于修身养性"
+原话"天天加班"→"公司对员工的时间给予了充分的信任和依赖，充分说明我们是不可替代的核心资产"
+原话"需求又改了"→"产品同学对完美的执着追求令人动容，每一版需求都是对上一版的深情否定"
 
 注意：
-- 要像一个真实的、情商高的朋友在教你怎么说话
-- 绵里藏针但不刻薄，让人品出味道
-- 口语化，别用书面语
-- 直接输出，一两句话`,
+- 幽默感来自"用褒义词描述糟糕的事"，形成反差
+- 像一个段子手在发微博，不是在写邮件
+- 直接输出转写结果，一两句话
+- 绝对不要用对话体，不要出现"你""我觉得你可以""建议你"`,
 
   humorous: `你在帮我把一句大实话用发疯/阴阳怪气的方式重新说。像一个被逼到极限的打工人在深夜发的朋友圈，又好笑又真实。
 
@@ -150,30 +420,54 @@ const stylePrompts = {
 - 别用"仿佛""宛如"这种文绉绉的词，口语化
 - 直接输出，别解释`,
 
-  english: `你在帮我把一句大实话翻译成外企人说话的方式——就是那种中英夹杂、明明能说中文但偏要夹英文的风格。像在Teams群里跟同事吐槽。
+  academic: `你的任务是把一句大实话转写成"学院派"风格——模仿那种让研究生窒息的导师、教务处官僚、学术权威说话的方式。就是那种明明在PUA你但说得冠冕堂皇、永远站在道德和学术制高点上、让你无法反驳的语气。
+
+语言特征：
+- 居高临下但包装成"为你好"："我这也是为你的学术前途考虑"
+- 动不动上升到态度/品德层面："这不是能力问题，这是态度问题"
+- 善用反问句施压："你觉得这样合适吗？""你对得起你的课题经费吗？"
+- 拿"别人家的学生"做对比："你看看人家xxx，再看看你"
+- 学术黑话+官僚话术混搭："学术规范""科研素养""培养方案""考核机制"
+- 永远在暗示你不够努力、不够感恩、不够配
 
 风格参考——
-原话"这会毫无意义"→"这个meeting完全是waste of bandwidth，一个action item都没有，纯粹burn我一小时"
-原话"他啥也不干"→"他的calendar永远block得满满的但output约等于零，很好奇他在deliver什么"
-原话"工资太低"→"说实话comp这块确实有点below market了，再不adjust我真的要start looking了"
+原话"这代码写得像屎"→"我不知道你这个代码是怎么写出来的，你有没有做过code review？这种东西拿出来，你让我怎么在组会上替你说话？你自己觉得这个东西能看吗？我当年带的学生可不是这个水平。"
+原话"天天加班"→"研究生阶段本来就是要吃苦的，我当年读博的时候哪天不是凌晨两三点？你现在这个工作量，说实话在我们课题组算轻的。你要是觉得累，那你要想想你是不是适合走这条路。"
+原话"工资太低"→"你现在这个阶段不应该谈钱，你应该想的是怎么提升自己的核心竞争力。等你有了成果，待遇自然会来。我见过太多年轻人眼高手低，还没做出东西就开始计较回报了。"
+原话"需求又改了"→"方向调整是很正常的事情，做科研哪有一条路走到黑的？你要学会适应，这也是一种能力。我改你的方向是因为我看到了更好的可能性，你应该感谢我及时帮你纠偏。"
 
 注意：
-- 英文部分要用得自然，像真的外企人说话习惯，不是硬翻译
-- 吐槽的关键词用中文落地，这样更有笑点
-- 像在跟同事私聊，不是在写邮件
-- 直接输出，一两句话`
+- 核心是那种"我比你懂、我比你高、我是为你好"的窒息感
+- 要像真实的导师/行政人员说话，有口语感，不是在写论文
+- 可以用反问句、可以拿别人做对比、可以上升到人品层面
+- 直接输出，3-5句话，像在办公室里训人`,
+
+  english: `你的任务是把一句大实话转写成"外企LinkedIn风"——就是那种在领英上发帖的口吻：中英夹杂、充满corporate jargon、表面positive实则在凡尔赛或吐槽，带着一种"I'm thriving"的假装体面感。
+
+语言特征：
+- 中英比例大约4:6或3:7，英文为主但关键吐槽点用中文"点睛"
+- LinkedIn高频词：grateful, humbled, excited to share, key takeaway, growth mindset, lean in, pivot, leverage, bandwidth, circle back, deep dive, take offline, low-hanging fruit, align, sync, stakeholder, deliverable, KPI, OKR
+- 模仿LinkedIn发帖的humble brag风格："Excited to share that..."、"Key takeaway from this week:..."、"Grateful for the opportunity to..."
+
+风格参考——
+原话"天天加班"→"Grateful for a team that's so passionate about delivering impact that we consistently go above and beyond office hours. 说白了就是天天卷到半夜，but hey, growth mindset right?"
+原话"工资太低"→"Had a great 1:1 with my manager about career growth. We're aligned on the vision, just not quite aligned on the comp yet lol. Time to update my LinkedIn status to 'open to opportunities'."
+原话"领导是傻逼"→"My skip-level gave some really... bold strategic direction today. Key takeaway: sometimes leadership means having the courage to make decisions that no one else would make. 真的没有人会那么做的，no one."
+原话"这代码写得像屎"→"Just did a deep dive into the legacy codebase. Let's just say there's a lot of opportunity for refactoring here. Whoever wrote this was definitely pivoting fast and breaking things. 主要是breaking things的部分做得特别好。"
+
+注意：
+- 笑点在于LinkedIn式的正能量包装下藏着真实吐槽
+- 英文部分要地道，像真的在外企工作的人
+- 中文"点睛"部分是戳破泡泡的那一下，要短促有力
+- 可以稍微长一点，2-4句
+- 直接输出，不要加解释`
 };
 
 function getSystemPrompt() {
   return stylePrompts[currentStyle] || stylePrompts.government;
 }
 
-async function callDeepSeek(userInput) {
-  if (abortController) {
-    abortController.abort();
-  }
-  abortController = new AbortController();
-
+async function callDeepSeek(userInput, signal) {
   const response = await fetch(API_URL, {
     method: "POST",
     headers: {
@@ -188,9 +482,9 @@ async function callDeepSeek(userInput) {
       ],
       stream: true,
       temperature: 1.05,
-      max_tokens: 200
+      max_tokens: 300
     }),
-    signal: abortController.signal
+    signal
   });
 
   if (!response.ok) {
@@ -201,7 +495,7 @@ async function callDeepSeek(userInput) {
   return response;
 }
 
-async function streamResult(response) {
+async function streamResult(response, seq) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder("utf-8");
   let buffer = "";
@@ -211,6 +505,11 @@ async function streamResult(response) {
   resultText.classList.add("typing-cursor");
 
   while (true) {
+    if (seq !== requestSeq) {
+      try { await reader.cancel(); } catch (e) {}
+      return "";
+    }
+
     const { done, value } = await reader.read();
     if (done) break;
 
@@ -219,6 +518,8 @@ async function streamResult(response) {
     buffer = lines.pop() || "";
 
     for (const line of lines) {
+      if (seq !== requestSeq) return "";
+
       const trimmed = line.trim();
       if (!trimmed || !trimmed.startsWith("data:")) continue;
 
@@ -236,21 +537,34 @@ async function streamResult(response) {
     }
   }
 
-  resultText.classList.remove("typing-cursor");
+  if (seq === requestSeq) {
+    resultText.classList.remove("typing-cursor");
+    lastGeneratedText = fullText.trim();
+  }
+
   return fullText;
 }
 
-async function handleTranslate() {
+async function handleTranslate(options) {
+  options = options || {};
+  const shouldScroll = options.scroll !== false;
   const raw = inputEl.value.trim();
 
   if (!raw) {
     inputEl.classList.add("border-red-500");
     inputEl.placeholder = "先输入一句大实话再点转换～";
     setTimeout(function() { inputEl.classList.remove("border-red-500"); }, 700);
+    inputArea.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
 
-  if (isLoading) return;
+  if (abortController) {
+    abortController.abort();
+  }
+
+  const seq = ++requestSeq;
+  abortController = new AbortController();
+
   setLoading(true);
 
   resultContainer.classList.remove("hidden");
@@ -259,20 +573,27 @@ async function handleTranslate() {
   resultCard.classList.add("result-enter");
   resultText.textContent = "";
   resultText.classList.add("typing-cursor");
+  lastGeneratedText = "";
 
-  setTimeout(function() {
-    resultContainer.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, 60);
+  if (shouldScroll) {
+    setTimeout(function() {
+      resultContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 80);
+  }
 
   try {
-    const response = await callDeepSeek(raw);
-    await streamResult(response);
+    const response = await callDeepSeek(raw, abortController.signal);
+    await streamResult(response, seq);
   } catch (err) {
+    if (seq !== requestSeq) return;
     if (err.name === "AbortError") return;
+
     resultText.classList.remove("typing-cursor");
     resultText.textContent = "⚠️ 生成失败：" + err.message;
   } finally {
-    setLoading(false);
+    if (seq === requestSeq) {
+      setLoading(false);
+    }
   }
 }
 
@@ -284,11 +605,37 @@ function setLoading(loading) {
 }
 
 function setActiveStyle(style, btn) {
+  if (!style || style === currentStyle && !inputEl.value.trim()) return;
+
   currentStyle = style;
-  styleButtons.forEach(function(b) { b.classList.remove("vibe-btn-active"); });
+
+  styleButtons.forEach(function(b) {
+    b.classList.remove("vibe-btn-active");
+  });
   btn.classList.add("vibe-btn-active");
-  if (inputEl.value.trim() && !isLoading) {
-    handleTranslate();
+
+  styleInfoItems.forEach(function(item) {
+    const isActive = item.getAttribute("data-info") === style;
+    item.className = isActive
+      ? "style-info rounded-2xl bg-indigo-50 border border-indigo-100 p-3"
+      : "style-info rounded-2xl bg-white/70 border border-slate-100 p-3";
+
+    const title = item.querySelector("p:first-child");
+    if (title) {
+      title.className = isActive
+        ? "text-sm font-black text-indigo-700"
+        : "text-sm font-black text-slate-800";
+    }
+  });
+
+  btn.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest",
+    inline: "center"
+  });
+
+  if (inputEl.value.trim()) {
+    handleTranslate({ scroll: false });
   }
 }
 
@@ -316,11 +663,95 @@ function showCopied() {
   copyBtn.textContent = "已复制 ✅";
   copyBtn.classList.replace("bg-indigo-600", "bg-green-500");
   copyBtn.classList.replace("hover:bg-indigo-700", "hover:bg-green-600");
+
   setTimeout(function() {
     copyBtn.textContent = old;
     copyBtn.classList.replace("bg-green-500", "bg-indigo-600");
     copyBtn.classList.replace("hover:bg-green-600", "hover:bg-indigo-700");
   }, 1200);
+}
+
+function saveToHistory() {
+  const text = lastGeneratedText || resultText.textContent.trim();
+  if (!text || text === "..." || text.startsWith("⚠️")) return;
+
+  const empty = historyList.querySelector(".border-dashed");
+  if (empty) historyList.innerHTML = "";
+
+  const item = document.createElement("button");
+  item.type = "button";
+  item.className = "w-full text-left rounded-2xl bg-white/75 border border-slate-100 p-3 text-xs text-slate-600 font-bold leading-relaxed hover:bg-indigo-50 hover:text-indigo-700 transition";
+  item.textContent = text.length > 86 ? text.slice(0, 86) + "..." : text;
+  item.title = text;
+
+  item.addEventListener("click", function() {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text);
+    }
+    item.textContent = "已复制这条记录 ✅";
+    setTimeout(function() {
+      item.textContent = text.length > 86 ? text.slice(0, 86) + "..." : text;
+    }, 900);
+  });
+
+  historyList.prepend(item);
+
+  while (historyList.children.length > 5) {
+    historyList.removeChild(historyList.lastChild);
+  }
+
+  const old = saveBtn.textContent;
+  saveBtn.textContent = "已收进记录 ✅";
+  setTimeout(function() {
+    saveBtn.textContent = old;
+  }, 1100);
+}
+
+function clearHistory() {
+  historyList.innerHTML = `
+    <div class="rounded-2xl bg-white/60 border border-dashed border-slate-200 p-4 text-sm text-slate-400 leading-relaxed">
+      生成后点"收进右侧记录"，好用的句子会出现在这里。
+    </div>
+  `;
+}
+
+function fillExample(text) {
+  inputEl.value = text;
+  updateCharCount();
+  inputEl.focus();
+
+  inputArea.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+}
+
+function updateCharCount() {
+  charCount.textContent = inputEl.value.length + " 字";
+}
+
+function clearAll() {
+  if (abortController) {
+    abortController.abort();
+  }
+
+  requestSeq++;
+  setLoading(false);
+
+  inputEl.value = "";
+  resultText.textContent = "...";
+  resultText.classList.remove("typing-cursor");
+  resultContainer.classList.add("hidden");
+  lastGeneratedText = "";
+  updateCharCount();
+
+  setTimeout(function() {
+    styleBar.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+    inputEl.focus();
+  }, 50);
 }
 
 styleButtons.forEach(function(btn) {
@@ -329,15 +760,34 @@ styleButtons.forEach(function(btn) {
   });
 });
 
-translateBtn.addEventListener("click", handleTranslate);
-againBtn.addEventListener("click", handleTranslate);
+document.querySelectorAll("#examples-list button, #mobile-examples-list button").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    fillExample(btn.textContent.trim());
+  });
+});
+
+translateBtn.addEventListener("click", function() {
+  handleTranslate({ scroll: true });
+});
+
+againBtn.addEventListener("click", function() {
+  handleTranslate({ scroll: false });
+});
+
 copyBtn.addEventListener("click", copyResult);
+saveBtn.addEventListener("click", saveToHistory);
+clearHistoryBtn.addEventListener("click", clearHistory);
+clearBtn.addEventListener("click", clearAll);
+
+inputEl.addEventListener("input", updateCharCount);
 
 inputEl.addEventListener("keydown", function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-    handleTranslate();
+    handleTranslate({ scroll: true });
   }
 });
+
+updateCharCount();
 </script>
 </body>
 </html>
